@@ -28,7 +28,7 @@ const ViewLeaves = () => {
     getUser();
   }, []);
 
-  const Email = user?.email
+  const Email = user?.staff_id
   const [leave, setLeave] = useState();
 
   const [sickLeave, setSickLeaveCount] = useState(0);
@@ -44,7 +44,7 @@ const ViewLeaves = () => {
       if (Email) {
 
         api
-          .post('/leave/getAppLeave', { email: Email })
+          .post('/leave/getLeaveEmpByid', { employee_id: Email })
           .then((res) => {
             setLeave(res.data.data);
 

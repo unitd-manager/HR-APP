@@ -79,9 +79,10 @@ const ViewAttendace = () => {
                 },
               },
             }}
-            onDayPress={day => {
+            onDayPress={(day) => {
               setSelected(day.dateString);
             }}
+            
             markedDates={{
               [selected]: {
                 selected: true,
@@ -105,8 +106,12 @@ const ViewAttendace = () => {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Calender />
                 <View>
-                  <Text style={Attendancestyles.subHeading}>{moment().format('dddd')}</Text>
-                  <Text style={Attendancestyles.heading}>{moment().format('DD-MMM-YYYY')}</Text>
+                <Text style={Attendancestyles.subHeading}>
+                    {data?.date ? moment(data.date).format('dddd') : 'No Data'}
+                  </Text>
+                
+                 <Text style={Attendancestyles.heading}>  {data?.date ? moment(data.date, 'DD-MM-YYYY').format('DD-MMM-YYYY') : 'No Data'}
+                  </Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -114,9 +119,12 @@ const ViewAttendace = () => {
                 <View>
                   <Text style={Attendancestyles.subHeading}>Total</Text>
                   <Text style={Attendancestyles.heading}>
-                    {data.day_check_in_time ?
-                      calculateTotalTime(data.day_check_in_time, data.day_check_out_time) :
-                      calculateTotalTime(data.night_check_In_time, data.night_check_out_time)}
+                  {data?.day_check_in_time
+  ? calculateTotalTime(data.day_check_in_time, data.day_check_out_time)
+  : data?.night_check_In_time
+    ? calculateTotalTime(data.night_check_In_time, data.night_check_out_time)
+    : '--'} 
+
                   </Text>
                 </View>
               </View>
@@ -126,7 +134,7 @@ const ViewAttendace = () => {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View>
                   <CheckIn />
-                  <Text style={Attendancestyles.subHeading}>Check In</Text>
+                  <Text style={Attendancestyles.subHeading}>qqCheck In</Text>
                 </View>
                 <Text style={Attendancestyles.heading}>
                   {data.day_check_in_time
@@ -217,7 +225,7 @@ const ViewAttendace = () => {
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <View>
                         <CheckIn />
-                        <Text style={Attendancestyles.subHeading}>Check In</Text>
+                        <Text style={Attendancestyles.subHeading}>wqsCheck In</Text>
                       </View>
                       <Text style={Attendancestyles.heading}>
                         {ele.day_check_in_time
@@ -352,16 +360,25 @@ const ViewAttendace = () => {
 
   // Show Daily Attendance Report
 
-  const ShowDailyAttendance = () => {
-    api
-      .get('/attendance/getEmployeeData')
-      .then(res => {
-        setData(res.data.data[res.data.data.length - 1]);
-      })
-      .catch(() => {
-        alert('Network connection error.');
-      });
-  }
+    const ShowDailyAttendance = () => {
+      if (!user || !selected) return;
+    
+      const userss = { staff_id: user.staff_id };
+    
+      api
+        .post('/attendance/getEmployeeData', userss)
+        .then(res => {
+          // Filter for selected date record
+          const filteredData = res.data.data.find(
+            entry => entry.date === reverseDateFormat(selected) // Ensure the date format matches
+          );
+          setData(filteredData || {}); // If no record, set empty object
+        })
+        .catch(() => {
+          alert('Network connection error.');
+        });
+    };
+    
 
   const calculateTotalTime = (startTime, endTime) => {
     const startMoment = moment(startTime, 'h:mm:ss a');
@@ -385,10 +402,45 @@ const ViewAttendace = () => {
     return `${day}-${month}-${year}`;
   };
 
-  const ShowWeeklyAttendance = () => {
 
+  const ShowMonthlyAttendance = () => {
+    if (!user) return;
+  
+    const userss = { staff_id: user.staff_id };
+  
     api
-      .get('/attendance/getEmployeeData')
+      .post('/attendance/getEmployeeData', userss)
+      .then(res => {
+        // Extract month from selectedStartDate (format: YYYY-MM)
+        const selectedMonth = selectedStartDate?.slice(0, 7);
+  
+        // Filter attendance records for that month
+        const filteredAttendance = res.data.data.filter(entry =>
+          entry.date.startsWith(selectedMonth) && entry.staff_id === user.staff_id
+        );
+  
+        seFilteredAttendances(filteredAttendance);
+      })
+      .catch(() => {
+        alert('Network connection error.');
+      });
+  };
+  
+  // Trigger this when switching to Monthly layout
+  useEffect(() => {
+    if (layout === 'monthly' && selectedStartDate) {
+      ShowMonthlyAttendance();
+    }
+  }, [layout, selectedStartDate]);
+  
+
+  const ShowWeeklyAttendance = () => {
+    if (!user) return;
+  
+    const userss = { staff_id: user.staff_id };
+  
+    api
+      .post('/attendance/getEmployeeData',userss)
       .then(res => {
         const reversedSelectedDates = selectedDates.map(reverseDateFormat);
         const filteredAttendance = res.data.data.filter(entry => {
@@ -406,10 +458,12 @@ const ViewAttendace = () => {
     }
   }, [selectedDates, user?.staff_id]);
 
-
-
   useEffect(() => {
     ShowDailyAttendance();
+  }, [selected]);
+  
+
+  useEffect(() => {
     calculateTotalTime();
   }, [selectedEndDate]);
 

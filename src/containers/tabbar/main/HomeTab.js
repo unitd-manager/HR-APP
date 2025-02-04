@@ -24,7 +24,9 @@ export default function HomeTab() {
     let userData = await AsyncStorage.getItem('USER');
     userData = JSON.parse(userData);
     setUserData(userData);
+    setExtraData(prev => !prev); // Trigger re-render
   };
+  
 
   useEffect(() => {
     setExtraData(!extraData);
@@ -45,17 +47,34 @@ export default function HomeTab() {
   const [insertedData, setInsertedData] = useState(null);
   const [data, setData] = useState([]);
 
-  const FetchData = () => {
-    api
-      .get('/attendance/getEmployeeData')
-      .then(res => {
-        setData(res.data.data[res.data.data.length - 1]);
-        console.log("data", res.data.data[res.data.data.length - 1])
-      })
-      .catch(() => {
-        alert('Network connection error.');
-      });
-  }
+  const FetchData = async () => {
+    if (!user) return;
+  
+    const userss = { staff_id: user.staff_id };
+  
+    try {
+      const res = await api.post(`/attendance/getEmployeeData`, userss);
+      const latestData = res.data.data[res.data.data.length - 1];
+  
+      setData(latestData);
+      
+      // Store check-in status locally
+      if (latestData.day_check_in_time && !latestData.day_check_out_time) {
+        await AsyncStorage.setItem('DAY_CHECKED_IN', 'true');
+      } else {
+        await AsyncStorage.setItem('DAY_CHECKED_IN', 'false');
+      }
+  
+      if (latestData.night_check_In_time && !latestData.night_check_out_time) {
+        await AsyncStorage.setItem('NIGHT_CHECKED_IN', 'true');
+      } else {
+        await AsyncStorage.setItem('NIGHT_CHECKED_IN', 'false');
+      }
+    } catch (error) {
+      alert('Network connection error.');
+    }
+  };
+  
 
   const insertAttendance = () => {
     const staff_id = user.staff_id;
@@ -164,53 +183,74 @@ export default function HomeTab() {
     }
   };
 
-  const onPressYes = () => {
-
+  const onPressYes = async () => {
     if (lastClickedButton === 'day') {
-      if (
-        btnTextDay === strings.daycheckIn &&
-        headerTitle === strings.confirmationIn
-      ) {
-        setBtnTextDay(strings.daycheckout);
-        setHeaderTitle(strings.confirmationOut);
+      if (btnTextDay === strings.daycheckIn) {
+        setBtnTextDay(strings.daycheckout); 
         insertAttendance();
         setIsNightButtonVisible(false);
-      }
-      if (btnTextDay === strings.daycheckout) {
+        await AsyncStorage.setItem('DAY_CHECKED_IN', 'true');
+      } else {
         setBtnTextDay(strings.daycheckIn);
-        setHeaderTitle(strings.confirmationIn);
         checkOut();
         setIsNightButtonVisible(true);
+        await AsyncStorage.setItem('DAY_CHECKED_IN', 'false');
       }
     } else if (lastClickedButton === 'night') {
-      if (
-        btnTextNight === strings.nightcheckIn &&
-        headerTitle === strings.confirmationIn
-      ) {
+      if (btnTextNight === strings.nightcheckIn) {
         setBtnTextNight(strings.nightcheckout);
-        setHeaderTitle(strings.confirmationOut);
-        setIsDayButtonVisible(false);
         insertAttendance();
-      }
-      if (btnTextNight === strings.nightcheckout) {
+        setIsDayButtonVisible(false);
+        await AsyncStorage.setItem('NIGHT_CHECKED_IN', 'true');
+      } else {
         setBtnTextNight(strings.nightcheckIn);
-        setHeaderTitle(strings.confirmationIn);
         checkOut();
         setIsDayButtonVisible(true);
+        await AsyncStorage.setItem('NIGHT_CHECKED_IN', 'false');
       }
     }
-
     setModalVisible(false);
   };
-
+  
+  
   const onPressNo = () => {
     setModalVisible(false);
   };
 
+
+  const loadButtonState = async () => {
+    const dayCheckedIn = await AsyncStorage.getItem('DAY_CHECKED_IN');
+    const nightCheckedIn = await AsyncStorage.getItem('NIGHT_CHECKED_IN');
+  
+    // Check day shift status
+    if (data?.day_check_in_time && !data?.day_check_out_time) {
+      setBtnTextDay(strings.daycheckout); // Show "Check-Out" if checked in but not out
+    } else {
+      setBtnTextDay(strings.daycheckIn); // Show "Check-In" otherwise
+    }
+  
+    // Check night shift status
+    if (data?.night_check_In_time && !data?.night_check_out_time) {
+      setBtnTextNight(strings.nightcheckout); // Show "Check-Out" if checked in but not out
+    } else {
+      setBtnTextNight(strings.nightcheckIn); // Show "Check-In" otherwise
+    }
+  
+    setIsDayButtonVisible(true);
+    setIsNightButtonVisible(true);
+  };
+  
+
   useEffect(() => {
-    FetchData();
+   
     calculateTotalTime();
   }, []);
+  useEffect(() => {
+    FetchData().then(() => loadButtonState()); // Ensure button states update after fetching data
+  }, [user]);
+  
+  
+
 
   const calculateTotalTime = (startTime, endTime) => {
     const startMoment = moment(startTime, 'h:mm:ss a');
@@ -258,21 +298,28 @@ export default function HomeTab() {
                 <EText type="m16" numberOfLines={1} color={colors.white}>{moment().format('DD-MMM-YYYY')}</EText>
               </View>
             </View>
-            <View style={{ flexDirection: 'row', color: colors.white, alignItems: 'center' }}>
-              <Clock />
-              <View style={{ marginLeft: 10 }}>
-                <EText type="m14" numberOfLines={1} color={colors.white}>Shift</EText>
-                <EText type="m16" numberOfLines={1} color={colors.white}>
-                  {data.day_check_in_time
-                    ? moment(data.day_check_in_time, 'h:mm:ss a').format('h:mm a')
-                    : moment(data.night_check_In_time, 'h:mm:ss a').format('h:mm a')
-                  } - {data.day_check_out_time
-                    ? moment(data.day_check_out_time, 'h:mm:ss a').format('h:mm a')
-                    : moment(data.night_check_out_time, 'h:mm:ss a').format('h:mm a')
-                  }
-                </EText>
-              </View>
-            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+  <Clock />
+  <View style={{ marginLeft: 10 }}>
+    <EText type="m14" numberOfLines={1} color={colors.white}>Shift</EText>
+    {data && (data.day_check_in_time || data.night_check_In_time) ? (
+      <EText type="m16" numberOfLines={1} color={colors.white}>
+        {data.day_check_in_time
+          ? moment(data.day_check_in_time, 'h:mm:ss a').format('h:mm a')
+          : moment(data.night_check_In_time, 'h:mm:ss a').format('h:mm a')
+        } - {data.day_check_out_time
+          ? moment(data.day_check_out_time, 'h:mm:ss a').format('h:mm a')
+          : moment(data.night_check_out_time, 'h:mm:ss a').format('h:mm a')
+        }
+      </EText>
+    ) : (
+      <EText type="m16" numberOfLines={1} color={colors.white}>
+        No attendance record
+      </EText>
+    )}
+  </View>
+</View>
+
           </View>
           <View style={localStyles.centeredTextContainer}>
             <EText type="m20" numberOfLines={1} color={colors.white}>

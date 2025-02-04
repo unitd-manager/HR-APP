@@ -48,18 +48,42 @@ const RequestLeave = ({route}) => {
 
   const [isFullDay, setIsFullDay] = useState(true);
   const [isHalfDay, setIsHalfDay] = useState(false);
-
-  const handleStartDateConfirm = date => {
+  const handleStartDateConfirm = (date) => {
     const formattedDate = formatDate(date);
     setStartDate(formattedDate);
+  
+    if (endDate) {
+      calculateTotalDays(date, endDate);
+    }
+  
     setStartDatePickerVisible(false);
   };
-
-  const handleEndDateConfirm = date => {
+  
+  const handleEndDateConfirm = (date) => {
     const formattedDate = formatDate(date);
     setEndDate(formattedDate);
+  
+    if (startDate) {
+      calculateTotalDays(startDate, date);
+    }
+  
     setEndDatePickerVisible(false);
   };
+  
+  // Function to calculate total days
+  const calculateTotalDays = (start, end) => {
+    const startMoment = moment(start, "DD-MM-YYYY");
+    const endMoment = moment(end, "DD-MM-YYYY");
+    
+    if (endMoment.isBefore(startMoment)) {
+      Alert.alert("End date cannot be before start date.");
+      return;
+    }
+  
+    const daysDiff = endMoment.diff(startMoment, "days") + 1; // +1 to include start day
+    SetTotalDays(daysDiff.toString());
+  };
+  
 
   const formatDate = date => {
     const formattedDate = date.toISOString().split('T')[0];
@@ -95,7 +119,7 @@ const RequestLeave = ({route}) => {
       isFullDay,
       isHalfDay,
       reason,
-      employee_id: route.params.employee_id,
+      employee_id: route.params.staff_id,
       creation_date:moment().format('DD-MMM-YYYY')
     };
 
@@ -112,7 +136,6 @@ const RequestLeave = ({route}) => {
         })
         .catch(error => {
           console.log('Error: ', error);
-          Alert.alert('Network connection error.');
         });
   };
 
@@ -122,20 +145,6 @@ const RequestLeave = ({route}) => {
       <ScrollView contentContainerStyle={localStyles.scrollViewContainer}>
         <View style={localStyles.contentContainerStyle}>
 
-          <EInput
-            placeHolder={'Total Days'}
-            _value={totalDays}
-            style={{ color: colors.placeHolderColor }}
-            autoCapitalize={'none'}
-            onChangeText={onChangedtotalDays}
-            inputContainerStyle={[
-              { backgroundColor: colors.inputBg },
-              localStyles.inputContainerStyle,
-              totalDaysInputStyle,
-            ]}
-            _onFocus={onFocustotalDays}
-            onBlur={onBlurtotalDays}
-          />
 
           <Dropdown
             style={[
@@ -185,6 +194,9 @@ const RequestLeave = ({route}) => {
             minimumDate={new Date()}
           />
 
+          
+
+
           <View style={localStyles.rowContainer}>
             <TouchableOpacity
               onPress={onPressStartDate}
@@ -215,6 +227,22 @@ const RequestLeave = ({route}) => {
               </EText>
             </TouchableOpacity>
           </View>
+          <EInput
+            placeHolder={'Total Days'}
+            _value={totalDays}
+            style={{ color: colors.placeHolderColor }}
+             labelField="label"
+            valueField="value"
+            autoCapitalize={'none'}
+            onChangeText={onChangedtotalDays}
+            inputContainerStyle={[
+              { backgroundColor: colors.inputBg },
+              localStyles.inputContainerStyle,
+              totalDaysInputStyle,
+            ]}
+            _onFocus={onFocustotalDays}
+            onBlur={onBlurtotalDays}
+          />
 
           <View style={localStyles.rowContainer}>
             <TouchableOpacity
