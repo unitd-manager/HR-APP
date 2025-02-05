@@ -120,7 +120,7 @@ const Login = () => {
       email:email,
       password:password
     }).then(async(res) => { 
-      console.log(res.data.data)
+      console.log("eeeeeeeeeee",res.data.data)
       if (res && res.data.msg === 'Success') {
         await AsyncStorage.setItem('USER_TOKEN','loggedin')
         await AsyncStorage.setItem('USER',JSON.stringify(res.data.data))

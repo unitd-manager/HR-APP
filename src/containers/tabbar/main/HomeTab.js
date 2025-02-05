@@ -50,10 +50,10 @@ export default function HomeTab() {
   const FetchData = async () => {
     if (!user) return;
   
-    const userss = { staff_id: user.staff_id };
+    const userss = { staff_id: user.staff_id ,site_id: user.site_id,branch_id: user.branch_id};
   
     try {
-      const res = await api.post(`/attendance/getEmployeeData`, userss);
+      const res = await api.post(`/attendance/getEmployeeSiteData`, userss);
       const latestData = res.data.data[res.data.data.length - 1];
   
       setData(latestData);
@@ -71,7 +71,7 @@ export default function HomeTab() {
         await AsyncStorage.setItem('NIGHT_CHECKED_IN', 'false');
       }
     } catch (error) {
-      alert('Network connection error.');
+      alert('Network connectssion error.');
     }
   };
   
@@ -79,6 +79,8 @@ export default function HomeTab() {
   const insertAttendance = () => {
     const staff_id = user.staff_id;
     const employee_id = user.employee_id;
+    const site_id = user.site_id;
+    const branch_id = user.branch_id;
     const currentDate = moment().format('DD-MM-YYYY');
     const currentTime = moment().format('h:mm:ss a');
 
@@ -88,6 +90,8 @@ export default function HomeTab() {
         date: currentDate,
         staff_id: staff_id,
         employee_id: employee_id,
+        site_id: site_id,
+        branch_id: branch_id,
         day_check_in_time: currentTime,
       };
 
@@ -109,6 +113,8 @@ export default function HomeTab() {
         date: currentDate,
         staff_id: staff_id,
         employee_id: employee_id,
+        site_id: site_id,
+        branch_id: branch_id,
         night_check_In_time: currentTime,
       };
 
@@ -273,6 +279,18 @@ export default function HomeTab() {
     return <SmallCardComponent item={item} key={index} />;
   };
 
+
+  const [refreshing, setRefreshing] = useState(false);
+
+const onRefresh = async () => {
+  setRefreshing(true);
+  await FetchData(); // Fetch the latest data
+  await loadButtonState(); // Ensure button states update after fetching data
+  setRefreshing(false);
+};
+
+
+
   return (
     <>
       <HomeHeader user={user} style={{ flex: 1 }} />
@@ -287,6 +305,8 @@ export default function HomeTab() {
           ListHeaderComponent={<RenderHeaderItem />}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={localStyles.contentContainerStyle}
+          refreshing={refreshing} // Enable pull-to-refresh
+          onRefresh={onRefresh} // Trigger refresh when pulled down
         />
 
         <View style={localStyles.bottomClock}>
@@ -324,9 +344,9 @@ export default function HomeTab() {
           <View style={localStyles.centeredTextContainer}>
             <EText type="m20" numberOfLines={1} color={colors.white}>
               <Clock /> 
-              {data.day_check_in_time ? 
-              calculateTotalTime(data.day_check_in_time, data.day_check_out_time) : 
-              calculateTotalTime(data.night_check_In_time, data.night_check_out_time)}
+              {data?.day_check_in_time ? 
+              calculateTotalTime(data?.day_check_in_time, data?.day_check_out_time) : 
+              calculateTotalTime(data?.night_check_In_time, data?.night_check_out_time)}
             </EText>
           </View>
 

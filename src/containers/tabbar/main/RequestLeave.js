@@ -120,6 +120,8 @@ const RequestLeave = ({route}) => {
       isHalfDay,
       reason,
       employee_id: route.params.staff_id,
+      site_id: route.params.site_id,
+      branch_id: route.params.branch_id,
       creation_date:moment().format('DD-MMM-YYYY')
     };
 
@@ -244,7 +246,7 @@ const RequestLeave = ({route}) => {
             onBlur={onBlurtotalDays}
           />
 
-          <View style={localStyles.rowContainer}>
+          {/* <View style={localStyles.rowContainer}>
             <TouchableOpacity
               onPress={toggleFullDay}
               style={[
@@ -276,7 +278,7 @@ const RequestLeave = ({route}) => {
                 Half-Day
               </EText>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <EInput
             placeholder="Reason"
