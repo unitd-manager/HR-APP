@@ -20,12 +20,12 @@ export default function GeneratePayslip({route }) {
   const { payslip } = route.params;
 
   const totalSalary = 
-  (payslip[0]?.basic_pay ?? 0) + 
-  (payslip[0]?.transport_allowance ?? 0) + 
-  (payslip[0]?.houseRent_allowance ?? 0) + 
-  (payslip[0]?.medical_allowance ?? 0) + 
-  (payslip[0]?.ot_amount ?? 0) + 
-  (payslip[0]?.ph_amount ?? 0);
+  (payslip?.basic_pay ?? 0) + 
+  (payslip?.transport_allowance ?? 0) + 
+  (payslip?.houseRent_allowance ?? 0) + 
+  (payslip?.medical_allowance ?? 0) + 
+  (payslip?.ot_amount ?? 0) + 
+  (payslip?.ph_amount ?? 0);
 
   const colors = useSelector(state => state.theme.theme);
   const textColor2 = colors.dark ? colors.grayScale3 : colors.grayScale7;
@@ -87,19 +87,19 @@ export default function GeneratePayslip({route }) {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         <InnerContainer>
-          <InnerText text1={'Name'} text2={`${payslip[0]?.first_name ?? '-' }`} />
-          <InnerText text1={'Designation'} text2={`${payslip[0]?.designation ?? '-' }`} />
-          <InnerText text1={'Month / Year'} text2={`${payslip[0]?.payroll_month ?? '-' } / ${payslip[0]?.payroll_year ?? '-' }`} isBottom={false} />
+          <InnerText text1={'Name'} text2={`${payslip?.employee_name ?? '-' }`} />
+          <InnerText text1={'Designation'} text2={`${payslip?.designation ?? '-' }`} />
+          <InnerText text1={'Month / Year'} text2={`${payslip?.payroll_month ?? '-' } / ${payslip?.payroll_year ?? '-' }`} isBottom={false} />
         </InnerContainer>
 
         <View style={localStyles.cardHeading}><Text style={{color:'#fff'}}>Earnings</Text></View>
         <InnerContainer>
-          <InnerText text1={'Basic Pay'} text2={`${payslip[0]?.basic_pay ?? 0}`} />
-          <InnerText text1={'Transport Allowance'} text2={`${payslip[0]?.transport_allowance ?? 0 }`} />
-          <InnerText text1={'House Rent Allowance'} text2={`${payslip[0]?.houseRent_allowance ?? 0}`} />
-          <InnerText text1={'Medical Allowance'} text2={`${payslip[0]?.medical_allowance ?? 0}`} />
-          <InnerText text1={'OT Pay'} text2={`${payslip[0]?.ot_amount ?? 0}`} />
-          <InnerText text1={'PH Pay'} text2={`${payslip[0]?.ph_amount ?? 0}`} isBottom={false} />
+          <InnerText text1={'Basic Pay'} text2={`${payslip?.basic_pay ?? 0}`} />
+          <InnerText text1={'Transport Allowance'} text2={`${payslip?.transport_allowance ?? 0 }`} />
+          <InnerText text1={'House Rent Allowance'} text2={`${payslip?.houseRent_allowance ?? 0}`} />
+          <InnerText text1={'Medical Allowance'} text2={`${payslip?.medical_allowance ?? 0}`} />
+          <InnerText text1={'OT Pay'} text2={`${payslip?.ot_amount ?? 0}`} />
+          <InnerText text1={'PH Pay'} text2={`${payslip?.ph_amount ?? 0}`} isBottom={false} />
           <EDivider style={[styles.mv15,{backgroundColor:'#FA7547'}]} />
           <InnerText text1={'Salary / Gross Paid'} text2={`${totalSalary}`
 
@@ -107,11 +107,11 @@ export default function GeneratePayslip({route }) {
         </InnerContainer>
         <View style={localStyles.cardHeading}><Text style={{color:'#fff'}}>Deductions</Text></View>
         <InnerContainer>
-          <InnerText text1={'Professional tax'} text2={`${payslip[0]?.tax ?? 0}`} />
-          <InnerText text1={'Employee CPF'} text2={`${payslip[0]?.cpf_employee ?? 0}`} />
-          <InnerText text1={'No pay leave'} text2={`${payslip[0]?.deduction1 ?? 0}`} isBottom={false}/>
+          <InnerText text1={'Professional tax'} text2={`${payslip?.tax ?? 0}`} />
+          <InnerText text1={'Employee CPF'} text2={`${payslip?.cpf_employee ?? 0}`} />
+          <InnerText text1={'No pay leave'} text2={`${payslip?.deduction1 ?? 0}`} isBottom={false}/>
           <EDivider style={[styles.mv15,{backgroundColor:'#FA7547'}]} />
-          <InnerText text1={'Total'} text2={`${payslip[0]?.net_total ?? 0}`}  isBottom={false} />
+          <InnerText text1={'Total'} text2={`${payslip?.net_total ?? 0}`}  isBottom={false} />
         </InnerContainer>
       </ScrollView>
     </>

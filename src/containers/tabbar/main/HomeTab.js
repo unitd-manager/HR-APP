@@ -50,30 +50,35 @@ export default function HomeTab() {
   const FetchData = async () => {
     if (!user) return;
   
-    const userss = { staff_id: user.staff_id ,site_id: user.site_id,branch_id: user.branch_id};
+    const userss = {
+      staff_id: user.staff_id,
+      site_id: user.site_id,
+      branch_id: user.branch_id
+    };
   
     try {
       const res = await api.post(`/attendance/getEmployeeSiteData`, userss);
-      const latestData = res.data.data[res.data.data.length - 1];
-  
-      setData(latestData);
+      const allData = res.data.data;
       
-      // Store check-in status locally
-      if (latestData.day_check_in_time && !latestData.day_check_out_time) {
-        await AsyncStorage.setItem('DAY_CHECKED_IN', 'true');
-      } else {
-        await AsyncStorage.setItem('DAY_CHECKED_IN', 'false');
-      }
+      const todayDate = moment().format('DD-MM-YYYY');
   
-      if (latestData.night_check_In_time && !latestData.night_check_out_time) {
-        await AsyncStorage.setItem('NIGHT_CHECKED_IN', 'true');
+      // Filter records for today's date
+      const todayRecord = allData.find(record => record.date === todayDate);
+  
+      if (todayRecord) {
+        setData(todayRecord);
+  
+        // Store check-in status locally
+        await AsyncStorage.setItem('DAY_CHECKED_IN', todayRecord.day_check_in_time && !todayRecord.day_check_out_time ? 'true' : 'false');
+        await AsyncStorage.setItem('NIGHT_CHECKED_IN', todayRecord.night_check_In_time && !todayRecord.night_check_out_time ? 'true' : 'false');
       } else {
-        await AsyncStorage.setItem('NIGHT_CHECKED_IN', 'false');
+        setData(null); // No record for today
       }
     } catch (error) {
-      alert('Network connectssion error.');
+      alert('Network connection error.');
     }
   };
+  
   
 
   const insertAttendance = () => {
@@ -294,22 +299,17 @@ const onRefresh = async () => {
   return (
     <>
       <HomeHeader user={user} style={{ flex: 1 }} />
-      <View style={[styles.flexGrow1, { backgroundColor: '#f5f5f5' }]}>
-        <FlashList
-          data={popularEventData}
-          extraData={extraData}
-          renderItem={renderCategoryItem}
-          keyExtractor={(item, index) => index.toString()}
-          estimatedItemSize={10}
-          numColumns={2}
-          ListHeaderComponent={<RenderHeaderItem />}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={localStyles.contentContainerStyle}
-          refreshing={refreshing} // Enable pull-to-refresh
-          onRefresh={onRefresh} // Trigger refresh when pulled down
-        />
+         <View>
 
-        <View style={localStyles.bottomClock}>
+      <View style={localStyles.card}>
+        <View style={localStyles.left}>
+          <EText type="m16" numberOfLines={1} color={colors.textColor}> Create Attendance </EText>
+          <Text style={{color:'#4D4C4C'}}>Click on Day Clock In or Night Clock In button to generate attendance</Text>
+        </View>
+        <Caledar />
+      </View>
+    </View>
+      <View style={localStyles.bottomClock}>
           <View style={localStyles.btnContainer}>
             <View style={{ flexDirection: 'row', color: colors.white, alignItems: 'center' }}>
               <Clock />
@@ -322,7 +322,7 @@ const onRefresh = async () => {
   <Clock />
   <View style={{ marginLeft: 10 }}>
     <EText type="m14" numberOfLines={1} color={colors.white}>Shift</EText>
-    {data && (data.day_check_in_time || data.night_check_In_time) ? (
+    {data ? (
       <EText type="m16" numberOfLines={1} color={colors.white}>
         {data.day_check_in_time
           ? moment(data.day_check_in_time, 'h:mm:ss a').format('h:mm a')
@@ -340,15 +340,19 @@ const onRefresh = async () => {
   </View>
 </View>
 
+
           </View>
-          <View style={localStyles.centeredTextContainer}>
-            <EText type="m20" numberOfLines={1} color={colors.white}>
-              <Clock /> 
-              {data?.day_check_in_time ? 
-              calculateTotalTime(data?.day_check_in_time, data?.day_check_out_time) : 
-              calculateTotalTime(data?.night_check_In_time, data?.night_check_out_time)}
-            </EText>
-          </View>
+          {(data?.day_check_out_time || data?.night_check_out_time) && (
+  <View style={localStyles.centeredTextContainer}>
+    <EText type="m20" numberOfLines={1} color={colors.white}>
+      <Clock /> 
+      {data?.day_check_in_time 
+        ? calculateTotalTime(data?.day_check_in_time, data?.day_check_out_time) 
+        : calculateTotalTime(data?.night_check_In_time, data?.night_check_out_time)}
+    </EText>
+  </View>
+)}
+
 
           <View style={localStyles.btnContainer}>
             {isDayButtonVisible && (
@@ -382,6 +386,22 @@ const onRefresh = async () => {
           onPressBtn1={onPressYes}
           onPressBtn2={onPressNo}
         />
+      <View style={[styles.flexGrow1, { backgroundColor: '#f5f5f5' }]}>
+        <FlashList
+          data={popularEventData}
+          extraData={extraData}
+          renderItem={renderCategoryItem}
+          keyExtractor={(item, index) => index.toString()}
+          estimatedItemSize={10}
+          numColumns={2}
+          // ListHeaderComponent={<RenderHeaderItem />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={localStyles.contentContainerStyle}
+          refreshing={refreshing} // Enable pull-to-refresh
+          onRefresh={onRefresh} // Trigger refresh when pulled down
+        />
+
+      
       </View>
     </>
   );

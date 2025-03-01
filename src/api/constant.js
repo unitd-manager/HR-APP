@@ -30,13 +30,13 @@ const popularEventData = [
   {
     id: 1,
     image: images.attendance,
-    title: 'Attendance',
+    title: 'View History',
     url: 'ViewAttendace'
   },
   {
     id: 2,
     image: images.leave,
-    title: 'Leaves',
+    title: 'Request Leave',
     url: 'ViewLeaves'
   },
   {
@@ -104,6 +104,7 @@ const LeaveType = [
   { id: '1',label:'Casual Leave', value: 'Casual Leave', },
   { id: '2',label:'Sick Leave', value: 'Sick Leave',},
   { id: '3',label:'Annual Leave', value: 'Annual Leave', }, 
+  { id: '4',label:'Permission', value: 'Permission', }, 
 ];
 
 const ProfileSetting = [

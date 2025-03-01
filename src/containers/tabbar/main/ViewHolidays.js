@@ -13,7 +13,7 @@ const ViewHolidays = () => {
 
   useEffect(() => {
     api
-      .get('/attendance/getHistory')
+      .get('/setting/getholiday')
       .then(res => {
         setHoliday(res.data.data);
       })
@@ -30,14 +30,14 @@ const ViewHolidays = () => {
           numberOfLines={1}
           color={colors.textcolor}
           style={{ textAlign: 'center', }}>
-          {item?.holiday_list}
+          {item?.holidayList}
         </EText>
         <EText
           type="b14"
           numberOfLines={1}
           color={colors.textcolor}
           style={{ textAlign: 'center', }}>
-          {item?.holiday_date}
+          {item?.code}
         </EText>
       </View>
     </>

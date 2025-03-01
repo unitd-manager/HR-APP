@@ -156,6 +156,15 @@ const styles = StyleSheet.create({
     flexGrow: 1, // Ensures scrolling even when content doesn't fill the screen
     padding: 15,
   },
+  subHeading: {
+    fontSize: 15,
+    color: '#8B0000',
+  },
+
+  heading: {
+    fontSize: 13,
+    color: '#000000',
+  },
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',

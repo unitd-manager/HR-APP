@@ -1,4 +1,5 @@
-import { View, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet,TextInput, TouchableOpacity, Alert, ScrollView,  Keyboard, 
+  TouchableWithoutFeedback ,Text ,FlatList} from 'react-native';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import EHeader from '../../../components/common/EHeader';
@@ -31,6 +32,8 @@ const RequestLeave = ({route}) => {
   const [totalDaysInputStyle, SetTotalDaysInputStyle] = useState(BlurredStyle);
   const [totalDays, SetTotalDays] = useState('');
   const [reason, setReason] = useState('');
+  const [leaveHours, setLeaveHours] = useState('');
+
 
   const onFocusInput = onHighlight => onHighlight(FocusedStyle);
   const onBlurInput = onHighlight => onHighlight(FocusedStyle);
@@ -109,76 +112,56 @@ const RequestLeave = ({route}) => {
     setIsFullDay(false);
   };
 
-  const onPressSubmit = () => {
+  const [showHoursDropdown, setShowLeavehourTypeDropdown] = useState(false);
 
+  const leavehourTypes = ['1','2','3','4','5'];
+
+  const onPressSubmit = () => {
     const formData = {
-      no_of_days:totalDays,
-      leave_type:leaveType,
-      from_date:startDate,
-      to_date:endDate,
+      no_of_days: leaveType === 'Permission' ? '0' : totalDays, // Set total days as 0 if leave type is 'Permission'
+      leave_type: leaveType,
+      from_date: startDate,
+      hours: leaveHours,
+      to_date: endDate,
       isFullDay,
       isHalfDay,
       reason,
       employee_id: route.params.staff_id,
       site_id: route.params.site_id,
       branch_id: route.params.branch_id,
-      creation_date:moment().format('DD-MMM-YYYY')
+      creation_date: moment().format('DD-MMM-YYYY')
     };
-
+  
     if (!leaveType || !startDate || !endDate) {
       Alert.alert('Please fill in all required fields.');
       return;
     }
-
+  
     api
-        .post('/leave/insertLeave', formData)
-        .then(() => {
-          Alert.alert('Leave Request sent successfully.');
-          navigation.navigate(StackNav.ViewLeaves);
-        })
-        .catch(error => {
-          console.log('Error: ', error);
-        });
+      .post('/leave/insertLeave', formData)
+      .then(() => {
+        Alert.alert('Leave Request sent successfully.');
+        navigation.navigate(StackNav.ViewLeaves);
+      })
+      .catch(error => {
+        console.log('Error: ', error);
+      });
   };
+  const handleLeaveHoursSelection = (hours) => {
+    setLeaveHours(hours);
+    setShowLeavehourTypeDropdown(false);
+  };
+  
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      
+
     <View style={{ backgroundColor: '#fafafa', flex: 1 }}>
       <EHeader title={'Request Leave'} />
       <ScrollView contentContainerStyle={localStyles.scrollViewContainer}>
         <View style={localStyles.contentContainerStyle}>
-
-
-          <Dropdown
-            style={[
-              localStyles.dropdownStyle,
-              {
-                backgroundColor: colors.inputBg,
-                borderColor: colors.backgroundColor,
-                color: colors.white,
-              },
-            ]}
-            placeholderStyle={{ color: colors.grayScale5 }}
-            data={LeaveType}
-            maxHeight={moderateScale(180)}
-            labelField="label"
-            valueField="value"
-            placeholder="Leave Type"
-            value={leaveType}
-            itemTextStyle={{
-              color: colors.textColor,
-              fontSize: moderateScale(16),
-            }}
-            onChange={onChangedLeaveType}
-            selectedTextStyle={{
-              color: colors.textColor,
-            }}
-            itemContainerStyle={{
-              backgroundColor: colors.inputBg,
-            }}
-            activeColor={colors.inputBg}
-          />
-
-          <DateTimePickerModal
+        <DateTimePickerModal
             isVisible={startDatePickerVisible}
             mode="date"
             onConfirm={handleStartDateConfirm}
@@ -229,22 +212,90 @@ const RequestLeave = ({route}) => {
               </EText>
             </TouchableOpacity>
           </View>
-          <EInput
-            placeHolder={'Total Days'}
-            _value={totalDays}
-            style={{ color: colors.placeHolderColor }}
-             labelField="label"
-            valueField="value"
-            autoCapitalize={'none'}
-            onChangeText={onChangedtotalDays}
-            inputContainerStyle={[
-              { backgroundColor: colors.inputBg },
-              localStyles.inputContainerStyle,
-              totalDaysInputStyle,
+
+          <Dropdown
+            style={[
+              localStyles.dropdownStyle,
+              {
+                backgroundColor: colors.inputBg,
+                borderColor: colors.backgroundColor,
+                color: colors.white,
+              },
             ]}
-            _onFocus={onFocustotalDays}
-            onBlur={onBlurtotalDays}
+            placeholderStyle={{ color: colors.grayScale5 }}
+            data={LeaveType}
+            maxHeight={moderateScale(180)}
+            labelField="label"
+            valueField="value"
+            placeholder="Leave Type"
+            value={leaveType}
+            itemTextStyle={{
+              color: colors.textColor,
+              fontSize: moderateScale(16),
+            }}
+            onChange={onChangedLeaveType}
+            selectedTextStyle={{
+              color: colors.textColor,
+            }}
+            itemContainerStyle={{
+              backgroundColor: colors.inputBg,
+            }}
+            activeColor={colors.inputBg}
           />
+
+{leaveType === 'Permission' && (
+  <>
+    <Text style={styles.label}>Select Hours *</Text>
+
+    <Dropdown
+      style={[
+        localStyles.dropdownStyle,
+        {
+          backgroundColor: colors.inputBg,
+          borderColor: colors.backgroundColor,
+          color: colors.white,
+        },
+      ]}
+      placeholderStyle={{ color: colors.grayScale5 }}
+      data={leavehourTypes.map((item) => ({ label: item, value: item }))}
+      maxHeight={moderateScale(180)}
+      labelField="label"
+      valueField="value"
+      placeholder="Select Hours"
+      value={leaveHours}
+      onChange={(item) => setLeaveHours(item.value)}
+      selectedTextStyle={{
+        color: colors.textColor,
+        fontSize: moderateScale(16),
+      }}
+      itemContainerStyle={{
+        backgroundColor: colors.inputBg,
+      }}
+      activeColor={colors.inputBg}
+    />
+  </>
+)}
+
+
+{leaveType !== 'Permission' && (
+            <EInput
+              placeHolder={'Total Days'}
+              _value={totalDays}
+              editable={false}
+              style={{ color: colors.placeHolderColor }}
+              labelField="label"
+              valueField="value"
+              autoCapitalize={'none'}
+              onChangeText={onChangedtotalDays}
+              inputContainerStyle={[
+                { backgroundColor: colors.inputBg },
+                localStyles.inputContainerStyle,
+                totalDaysInputStyle,
+              ]}
+              _onFocus={onFocustotalDays}
+              onBlur={onBlurtotalDays}
+            />
+          )}
 
           {/* <View style={localStyles.rowContainer}>
             <TouchableOpacity
@@ -280,20 +331,19 @@ const RequestLeave = ({route}) => {
             </TouchableOpacity>
           </View> */}
 
-          <EInput
-            placeholder="Reason"
-            value={reason}
-            style={{ color: colors.placeHolderColor }}
-            autoCapitalize={'none'}
-            onChangeText={onChangedReason}
-            inputContainerStyle={[
-              localStyles.textInputStyle,
-              { backgroundColor: colors.inputBg, borderColor: colors.backgroundColor },
-            ]}
-            multiline
-            _onFocus={onFocustotalDays}
-            onBlur={onBlurtotalDays}
-          />
+<View style={[localStyles.textInputStyle, { backgroundColor: colors.inputBg, borderColor: colors.backgroundColor, minHeight: moderateScale(90) }]}>
+  <TextInput
+    placeholder="Reason"
+    placeholderTextColor={colors.placeHolderColor}
+    keyboardType="default"
+    value={reason}
+    multiline={true}  // Enables textarea behavior
+    numberOfLines={4}
+    style={{ color: colors.textColor, fontSize: moderateScale(16), flex: 1 }}
+    autoCapitalize="none"
+    onChangeText={onChangedReason}
+  />
+</View>
         </View>
       </ScrollView>
       <EButton
@@ -304,6 +354,7 @@ const RequestLeave = ({route}) => {
             containerStyle={localStyles.continueBtnStyle}
           />
     </View>
+    </TouchableWithoutFeedback>
   );
 };
 
