@@ -10,7 +10,7 @@ import {colors, styles} from '../../themes';
 import { getHeight, moderateScale} from '../../common/constants';
 import ESafeAreaView from '../../components/common/ESafeAreaView';
 import EInput from '../../components/common/EInput';
-import {validateEmail} from '../../utils/validators';
+import {validateEmail, validatePassword} from '../../utils/validators';
 import KeyBoardAvoidWrapper from '../../components/common/KeyBoardAvoidWrapper';
 import EButton from '../../components/common/EButton';
 import api from '../../api/api';
@@ -67,11 +67,10 @@ const Login = () => {
     const {msg} = validateEmail(val.trim());
     setEmail(val.trim());
     setEmailError(msg);
-  };
-  const onChangedPassword = val => {
-    // const {msg} = validatePassword(val.trim());
+  };  const onChangedPassword = val => {
+    const {msg} = validatePassword(val.trim());
     setPassword(val.trim());
-    // setPasswordError(msg);
+    setPasswordError(msg);
   };
 
   const EmailIcon = () => {
@@ -116,21 +115,36 @@ const Login = () => {
   );
 
   const onPressSignWithPassword = async () => {
-    api.post('/api/login', {
-      email:email,
-      password:password
-    }).then(async(res) => { 
-      console.log("eeeeeeeeeee",res.data.data)
-      if (res && res.data.msg === 'Success') {
-        await AsyncStorage.setItem('USER_TOKEN','loggedin')
-        await AsyncStorage.setItem('USER',JSON.stringify(res.data.data))
-        signIn('124')  
-      } else {
-        Alert.alert('Please Enter Correct Email and Password')
+    try {
+      if (!email || !password) {
+        Alert.alert('Error', 'Please enter both email and password');
+        return;
       }
-    }).catch(()=>{
-      Alert.alert('Invalid Credentials')
-    })
+
+      const response = await api.post('/api/login', {
+        email: email.trim(),
+        password: password
+      });
+
+      console.log("Login response:", response.data);
+      
+      if (response?.data?.msg === 'Success' && response?.data?.data) {
+        await AsyncStorage.setItem('USER_TOKEN', 'loggedin');
+        await AsyncStorage.setItem('USER', JSON.stringify(response.data.data));
+        signIn('124');
+      } else {
+        Alert.alert('Login Failed', response?.data?.msg || 'Invalid credentials. Please check your email and password.');
+      }
+    } catch (error) {
+      console.log("Login error:", error.response?.data || error.message);
+      if (error.response?.status === 401) {
+        Alert.alert('Login Failed', 'Invalid email or password');
+      } else if (!error.response) {
+        Alert.alert('Network Error', 'Please check your internet connection');
+      } else {
+        Alert.alert('Error', 'Something went wrong. Please try again later.');
+      }
+    }
   };
 
 
